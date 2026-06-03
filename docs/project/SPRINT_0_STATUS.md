@@ -22,9 +22,12 @@ Sprint 0 este in progres avansat.
 - GitHub Actions CI
 - QA checklist
 
+## Confirmat
+
+- GitHub Actions build: trecut.
+
 ## De confirmat inainte de Sprint 1
 
-- GitHub Actions trece pe ultimul commit
 - pnpm install ruleaza local
 - pnpm docker:up ruleaza local
 - pnpm db:generate ruleaza local
