@@ -135,6 +135,63 @@ Infrastructură locală:
 - Redis 7;
 - MinIO pentru storage documente.
 
+## Rulare locală — Sprint 0
+
+Cerințe locale:
+
+- Node.js 20+
+- pnpm 9+
+- Docker Desktop sau Docker Engine
+
+Instalare dependințe:
+
+```bash
+pnpm install
+```
+
+Pornire servicii locale:
+
+```bash
+pnpm docker:up
+```
+
+Generare Prisma client:
+
+```bash
+pnpm db:generate
+```
+
+Rulare migrații, după ce există migrația inițială:
+
+```bash
+pnpm db:migrate
+```
+
+Pornire API:
+
+```bash
+pnpm dev:api
+```
+
+Pornire frontend:
+
+```bash
+pnpm dev:web
+```
+
+Pornire completă monorepo:
+
+```bash
+pnpm dev
+```
+
+URL-uri locale:
+
+- Frontend: `http://localhost:3000`
+- API health: `http://localhost:3001/api/health`
+- API docs: `http://localhost:3001/api/docs`
+- MinIO console: `http://localhost:9001`
+
 ## Limită curentă
 
 În Sprint 0 și Sprint 1 nu implementăm încă:
