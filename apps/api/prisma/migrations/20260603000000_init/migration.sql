@@ -1,11 +1,13 @@
 -- Initial database schema for Sprint 0 and Sprint 1 foundation
 
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 CREATE TYPE "SourceSystemType" AS ENUM ('ERP', 'WMS', 'FAP', 'AI');
 CREATE TYPE "UserStatus" AS ENUM ('active', 'inactive', 'locked');
 CREATE TYPE "AuditChangeSource" AS ENUM ('manual', 'import', 'system', 'api', 'ai');
 
 CREATE TABLE "User" (
-    "id" UUID NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
     "fullName" TEXT NOT NULL,
@@ -17,7 +19,7 @@ CREATE TABLE "User" (
 );
 
 CREATE TABLE "Role" (
-    "id" UUID NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -27,7 +29,7 @@ CREATE TABLE "Role" (
 );
 
 CREATE TABLE "UserRole" (
-    "id" UUID NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "userId" UUID NOT NULL,
     "roleId" UUID NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -36,7 +38,7 @@ CREATE TABLE "UserRole" (
 );
 
 CREATE TABLE "SourceSystem" (
-    "id" UUID NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "systemType" "SourceSystemType" NOT NULL,
@@ -47,7 +49,7 @@ CREATE TABLE "SourceSystem" (
 );
 
 CREATE TABLE "AuditLog" (
-    "id" UUID NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "entityType" TEXT NOT NULL,
     "entityId" TEXT NOT NULL,
     "fieldName" TEXT,
