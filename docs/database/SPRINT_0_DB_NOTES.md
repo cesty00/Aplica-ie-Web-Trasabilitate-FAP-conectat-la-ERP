@@ -10,19 +10,21 @@ Schema Prisma initiala a fost adaugata pentru:
 - SourceSystem
 - AuditLog
 
-Migrarea initiala SQL a fost adaugata, dar trebuie verificata la rularea locala cu Prisma.
+Migrarea initiala SQL a fost adaugata.
 
-## Nota de corectie
+## Corectii aplicate
 
-La verificarea manuala s-a observat ca migrarea SQL trebuie aliniata cu defaulturile UUID definite in Prisma schema.
+- Migrarea initiala include extensia pgcrypto.
+- Coloanele UUID au default gen_random_uuid().
+- Seed-ul are handling explicit de eroare.
+
+## De verificat local
 
 Inainte de marcarea Sprint 0 ca finalizat, rularea locala trebuie sa confirme:
 
 - pnpm db:generate
 - pnpm db:migrate
 - pnpm db:seed
-
-Daca Prisma regenereaza migrarea, versiunea generata local are prioritate fata de migrarea scrisa manual.
 
 ## Regula
 
