@@ -28,6 +28,37 @@ enum AuditChangeSource {
   ai
 }
 
+enum ProductMappingStatus {
+  active
+  needs_review
+  blocked
+}
+
+enum ImportBatchStatus {
+  success
+  partial
+  failed
+  processing
+}
+
+enum ImportLineStatus {
+  imported
+  warning
+  rejected
+  duplicate
+}
+
+enum WmsOperationType {
+  receipt
+  move
+  transfer
+  dispatch
+  truck_loading
+  positive_adjustment
+  negative_adjustment
+  unknown
+}
+
 model User {
   id           String     @id @default(uuid()) @db.Uuid
   email        String     @unique
@@ -35,7 +66,9 @@ model User {
   fullName     String
   status       UserStatus @default(active)
 
-  roles        UserRole[]
+  roles                   UserRole[]
+  importedBatches         ImportBatch[]    @relation("ImportBatchImportedBy")
+  approvedProductMappings ProductMapping[] @relation("ProductMappingApprovedBy")
 
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -72,6 +105,8 @@ model SourceSystem {
   systemType SourceSystemType
   active     Boolean          @default(true)
 
+  importBatches ImportBatch[]
+
   createdAt  DateTime         @default(now())
 }
 
@@ -87,4 +122,253 @@ model AuditLog {
   changeReason String?
   changeSource AuditChangeSource
   metadata     Json?
+}
+
+model Product {
+  id            String   @id @default(uuid()) @db.Uuid
+  productCode   String   @unique
+  name          String
+  baseUom       String
+  weight        Decimal? @db.Decimal(14, 3)
+  unitsPerBox   Decimal? @db.Decimal(14, 3)
+  isFapRelevant Boolean  @default(false)
+  active        Boolean  @default(true)
+
+  mappings             ProductMapping[]
+  wmeMovements         WmeMovement[]
+  wmsTraceMovements    WmsTraceMovement[]
+  wmsProductionInputs  WmsProductionInput[]
+  wmsProductionOutputs WmsProductionOutput[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ProductMapping {
+  id             String               @id @default(uuid()) @db.Uuid
+  wmeProductCode String?
+  wmeProductName String
+  wmsProductCode String
+  wmsProductName String
+  productId      String               @db.Uuid
+  mappingStatus  ProductMappingStatus @default(needs_review)
+  confidence     Decimal?             @db.Decimal(5, 2)
+  approvedBy     String?              @db.Uuid
+  approvedAt     DateTime?
+
+  product        Product @relation(fields: [productId], references: [id])
+  approvedByUser User?   @relation("ProductMappingApprovedBy", fields: [approvedBy], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([wmeProductName, wmsProductCode])
+  @@index([wmeProductCode])
+  @@index([wmsProductCode])
+  @@index([mappingStatus])
+}
+
+model ImportBatch {
+  id             String            @id @default(uuid()) @db.Uuid
+  sourceSystemId String            @db.Uuid
+  importType     String
+  fileName       String
+  fileHash       String?
+  totalRows      Int               @default(0)
+  acceptedRows   Int               @default(0)
+  rejectedRows   Int               @default(0)
+  warningRows    Int               @default(0)
+  status         ImportBatchStatus @default(processing)
+  errorSummary   Json?
+  importedBy     String?           @db.Uuid
+  importedAt     DateTime          @default(now())
+  createdAt      DateTime          @default(now())
+
+  sourceSystem         SourceSystem          @relation(fields: [sourceSystemId], references: [id])
+  importedByUser       User?                 @relation("ImportBatchImportedBy", fields: [importedBy], references: [id])
+  lines                ImportLine[]
+  wmeMovements         WmeMovement[]
+  wmsTraceMovements    WmsTraceMovement[]
+  wmsProductionOrders  WmsProductionOrder[]
+
+  @@index([sourceSystemId])
+  @@index([importType])
+  @@index([status])
+  @@index([fileHash])
+}
+
+model ImportLine {
+  id                String           @id @default(uuid()) @db.Uuid
+  importBatchId     String           @db.Uuid
+  rowNumber         Int
+  rawData           Json
+  normalizedData    Json?
+  entityTypeCreated String?
+  entityIdCreated   String?          @db.Uuid
+  status            ImportLineStatus
+  errorCode         String?
+  errorMessage      String?
+  severity          String?
+  resolutionStatus  String           @default("open")
+
+  importBatch       ImportBatch @relation(fields: [importBatchId], references: [id])
+
+  createdAt         DateTime @default(now())
+
+  @@unique([importBatchId, rowNumber])
+  @@index([status])
+  @@index([errorCode])
+}
+
+model WmeMovement {
+  id              String   @id @default(uuid()) @db.Uuid
+  importBatchId   String   @db.Uuid
+  sourceRowHash   String   @unique
+  documentType    String
+  documentNo      String?
+  movementDate    DateTime
+  wmeProductCode  String?
+  productId       String?  @db.Uuid
+  productName     String
+  quantityIn      Decimal? @db.Decimal(14, 3)
+  quantityOut     Decimal? @db.Decimal(14, 3)
+  balanceQuantity Decimal? @db.Decimal(14, 3)
+  uom             String
+  warehouseCode   String?
+  warehouseName   String?
+  partnerName     String?
+  referenceNo     String?
+  rawData         Json?
+
+  importBatch     ImportBatch @relation(fields: [importBatchId], references: [id])
+  product         Product?    @relation(fields: [productId], references: [id])
+
+  createdAt       DateTime @default(now())
+
+  @@index([importBatchId])
+  @@index([movementDate])
+  @@index([wmeProductCode])
+  @@index([documentType])
+  @@index([documentNo])
+}
+
+model WmsTraceMovement {
+  id                      String           @id @default(uuid()) @db.Uuid
+  importBatchId           String           @db.Uuid
+  sourceRowHash           String           @unique
+  movementDate            DateTime
+  wmsProductCode          String
+  productId               String?          @db.Uuid
+  productName             String
+  operationTypeRaw        String
+  operationTypeNormalized WmsOperationType @default(unknown)
+  quantity                Decimal          @db.Decimal(14, 3)
+  uom                     String
+  wmsLotNo                String?
+  sourceLocation          String?
+  destinationLocation     String?
+  sourcePallet            String?
+  destinationPallet       String?
+  orderNo                 String?
+  warehouse               String?
+  partnerName             String?
+  documentInNo            String?
+  documentOrderNo         String?
+  owner                   String?
+  details                 String?
+  rawData                 Json?
+
+  importBatch             ImportBatch @relation(fields: [importBatchId], references: [id])
+  product                 Product?    @relation(fields: [productId], references: [id])
+
+  createdAt               DateTime @default(now())
+
+  @@index([importBatchId])
+  @@index([movementDate])
+  @@index([wmsProductCode])
+  @@index([wmsLotNo])
+  @@index([operationTypeNormalized])
+  @@index([documentInNo])
+  @@index([documentOrderNo])
+}
+
+model WmsProductionOrder {
+  id              String   @id @default(uuid()) @db.Uuid
+  importBatchId   String   @db.Uuid
+  wmsProductionNo String
+  serie           String?
+  serieNo         String?
+  clientName      String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  statusRaw       String?
+  createdByName   String?
+  machineName     String?
+  rawData         Json?
+
+  importBatch     ImportBatch           @relation(fields: [importBatchId], references: [id])
+  inputs          WmsProductionInput[]
+  outputs         WmsProductionOutput[]
+
+  createdAt       DateTime @default(now())
+
+  @@unique([wmsProductionNo])
+  @@index([importBatchId])
+  @@index([startedAt])
+  @@index([completedAt])
+}
+
+model WmsProductionInput {
+  id                   String   @id @default(uuid()) @db.Uuid
+  wmsProductionOrderId String   @db.Uuid
+  inputProductCode     String
+  inputProductId       String?  @db.Uuid
+  inputProductName     String
+  inputLotNo           String?
+  recipeQuantity       Decimal? @db.Decimal(14, 3)
+  consumedQuantity     Decimal  @db.Decimal(14, 3)
+  uom                  String
+  expiryDate           DateTime?
+  productionDate       DateTime?
+  unitWeightKg         Decimal? @db.Decimal(14, 3)
+  totalWeightKg        Decimal? @db.Decimal(14, 3)
+  sourceRowHash        String   @unique
+  rawData              Json?
+
+  productionOrder      WmsProductionOrder @relation(fields: [wmsProductionOrderId], references: [id])
+  inputProduct         Product?           @relation(fields: [inputProductId], references: [id])
+
+  createdAt            DateTime @default(now())
+
+  @@index([wmsProductionOrderId])
+  @@index([inputProductCode])
+  @@index([inputLotNo])
+}
+
+model WmsProductionOutput {
+  id                   String   @id @default(uuid()) @db.Uuid
+  wmsProductionOrderId String   @db.Uuid
+  outputProductCode    String
+  outputProductId      String?  @db.Uuid
+  outputProductName    String
+  outputLotNo          String?
+  recipeQuantity       Decimal? @db.Decimal(14, 3)
+  producedQuantity     Decimal  @db.Decimal(14, 3)
+  uom                  String
+  expiryDate           DateTime?
+  productionDate       DateTime?
+  lossQuantity         Decimal? @db.Decimal(14, 3)
+  lossPercent          Decimal? @db.Decimal(8, 3)
+  totalWeightKg        Decimal? @db.Decimal(14, 3)
+  sourceRowHash        String   @unique
+  rawData              Json?
+
+  productionOrder      WmsProductionOrder @relation(fields: [wmsProductionOrderId], references: [id])
+  outputProduct        Product?           @relation(fields: [outputProductId], references: [id])
+
+  createdAt            DateTime @default(now())
+
+  @@index([wmsProductionOrderId])
+  @@index([outputProductCode])
+  @@index([outputLotNo])
 }
