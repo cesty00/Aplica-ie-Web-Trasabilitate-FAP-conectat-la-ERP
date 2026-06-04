@@ -54,6 +54,17 @@ Dupa adaugarea modelelor de import surse in Prisma si dupa adaugarea endpointuri
 
 Rezultat: starea curenta main este valida local dupa aceste modificari.
 
+## Validare locala endpointuri Sprint 1A
+
+Dupa inregistrarea modulelor `ProductsModule` si `ProductMappingsModule` in `AppModule`, s-a validat local:
+
+- Swagger afiseaza `GET /api/products`.
+- Swagger afiseaza `GET /api/product-mappings`.
+- `GET /api/products` raspunde cu `[]` inainte de importul produselor reale.
+- `GET /api/product-mappings` raspunde cu `[]` inainte de generarea/aprobarea maparilor reale.
+
+Rezultat: Sprint 1A read-only product foundation este functional local.
+
 ## Observatii
 
 - Docker Desktop nu este functional pe statia locala testata si a fost scos temporar din fluxul local.
@@ -81,7 +92,7 @@ Regula noua:
 - Decizie privind Docker: reparare locala ulterioara sau mentinere flux PostgreSQL local pentru dezvoltare.
 - Extindere health endpoint pentru verificare reala database.
 - Stabilizare CI dupa commitul atomic urmator.
-- Inregistrarea modulelor noi in AppModule si verificarea endpointurilor read-only in Swagger.
+- Implementarea modulului `imports` read-only, atomic: module + controller + service + AppModule.
 
 ## In afara scope Sprint 0
 
