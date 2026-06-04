@@ -18,6 +18,8 @@ Faza curentă: **Sprint 0 — inițializare proiect**.
 
 Obiectiv Sprint 0: creare fundație tehnică minimă pentru dezvoltare controlată.
 
+Status local curent: Sprint 0 validat cu observații. Detalii în `docs/project/SPRINT_0_STATUS.md`.
+
 ## Roluri de lucru
 
 Asistentul ChatGPT va acționa ca echipă integrată de dezvoltare software:
@@ -191,6 +193,44 @@ URL-uri locale:
 - API health: `http://localhost:3001/api/health`
 - API docs: `http://localhost:3001/api/docs`
 - MinIO console: `http://localhost:9001`
+
+## Rulare locală fără Docker
+
+Dacă Docker Desktop nu pornește pe stația locală, dezvoltarea Sprint 0 poate continua temporar fără Docker.
+
+Flux validat local pe Windows:
+
+1. Instalează PostgreSQL local.
+2. Creează baza de date `fap_traceability`.
+3. Creează `.env` din `.env.example`.
+4. Configurează `DATABASE_URL` către PostgreSQL local.
+5. Copiază `.env` și în `apps/api/.env`, deoarece Prisma rulează din folderul API.
+6. Rulează:
+
+```bash
+pnpm install
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
+pnpm --filter api build
+pnpm --filter web build
+pnpm dev:api
+pnpm dev:web
+```
+
+URL-uri validate în acest flux:
+
+- Frontend: `http://localhost:3000`
+- API health: `http://localhost:3001/api/health`
+- API docs: `http://localhost:3001/api/docs`
+- Paginile `/`, `/login`, `/dashboard`, `/admin/users`, `/admin/roles`, `/audit`
+
+Limitări ale fluxului fără Docker:
+
+- Redis nu este validat local.
+- MinIO nu este validat local.
+- `pnpm docker:up` rămâne nevalidat pe stația locală fără Docker.
+- Health endpoint raportează temporar `database: not_checked` și `redis: not_checked`.
 
 ## Limită curentă
 
