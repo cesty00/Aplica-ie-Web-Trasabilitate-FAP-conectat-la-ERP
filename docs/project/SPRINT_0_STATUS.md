@@ -65,6 +65,18 @@ Dupa inregistrarea modulelor `ProductsModule` si `ProductMappingsModule` in `App
 
 Rezultat: Sprint 1A read-only product foundation este functional local.
 
+## Validare locala endpoint imports Sprint 1A
+
+Dupa adaugarea modulului `ImportsModule` si inregistrarea lui in `AppModule`, s-a validat local:
+
+- API-ul porneste cu succes prin `pnpm dev:api`.
+- `ImportsModule` apare in logurile NestJS ca initializat.
+- Swagger afiseaza `GET /api/imports`.
+- `GET /api/imports` raspunde cu `[]` inainte de importuri reale.
+- git status: working tree clean.
+
+Rezultat: Sprint 1A read-only imports foundation este functional local.
+
 ## Observatii
 
 - Docker Desktop nu este functional pe statia locala testata si a fost scos temporar din fluxul local.
@@ -91,8 +103,8 @@ Regula noua:
 
 - Decizie privind Docker: reparare locala ulterioara sau mentinere flux PostgreSQL local pentru dezvoltare.
 - Extindere health endpoint pentru verificare reala database.
-- Stabilizare CI dupa commitul atomic urmator.
-- Implementarea modulului `imports` read-only, atomic: module + controller + service + AppModule.
+- Stabilizare CI dupa commiturile finale Sprint 1A.
+- Inceperea Sprint 1B: import controlat produse din nomenclator in `Product`.
 
 ## In afara scope Sprint 0
 
