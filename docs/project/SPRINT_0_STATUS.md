@@ -26,7 +26,7 @@ Verdict local: PASS_WITH_OBSERVATIONS.
 
 ## Confirmat
 
-- GitHub Actions build: trecut.
+- GitHub Actions build: trecut initial pentru Sprint 0.
 - Repository clonat local pe Windows.
 - pnpm install ruleaza local.
 - pnpm db:generate ruleaza local.
@@ -42,6 +42,18 @@ Verdict local: PASS_WITH_OBSERVATIONS.
 - /api/docs este disponibil.
 - /, /login, /dashboard, /admin/users, /admin/roles si /audit raspund local.
 
+## Validare locala ulterioara pentru Sprint 1A
+
+Dupa adaugarea modelelor de import surse in Prisma si dupa adaugarea endpointurilor read-only initiale pentru produse si mapari produse, s-a validat local:
+
+- git pull din main.
+- pnpm db:generate.
+- pnpm --filter api build.
+- pnpm --filter web build.
+- git status: working tree clean.
+
+Rezultat: starea curenta main este valida local dupa aceste modificari.
+
 ## Observatii
 
 - Docker Desktop nu este functional pe statia locala testata si a fost scos temporar din fluxul local.
@@ -50,15 +62,26 @@ Verdict local: PASS_WITH_OBSERVATIONS.
 - Redis si MinIO nu au fost validate local fara Docker.
 - Exista warnings necritice pentru Tailwind content si configuratia ESLint Next.js.
 - O migrare Prisma suplimentara generata local care elimina UUID defaults a fost respinsa si stearsa local.
-- Fișiere generate local ramase necomise dupa validare: pnpm-lock.yaml, apps/web/next-env.d.ts si apps/api/prisma/migrations/migration_lock.toml.
+- Fisierele generate local pnpm-lock.yaml, apps/web/next-env.d.ts si apps/api/prisma/migrations/migration_lock.toml au fost ulterior adaugate in repository impreuna cu migrarea import source models.
+- Unele rulari CI intermediare au esuat deoarece au fost facute commituri partiale pe main in care modulele NestJS importau fisiere care nu existau inca in acel commit individual. Starea finala cumulata a fost validata local prin build API si build Web.
 
-## De confirmat inainte de Sprint 1
+## Lectie de lucru GitHub
 
-- Decizie repo pentru pnpm-lock.yaml.
-- Decizie repo pentru apps/web/next-env.d.ts.
-- Decizie repo pentru apps/api/prisma/migrations/migration_lock.toml.
+Pentru urmatoarele modificari, nu se vor mai face commituri partiale pe main pentru fisiere dependente intre ele.
+
+Regula noua:
+
+- modificarile API trebuie grupate atomic;
+- un modul NestJS trebuie introdus in acelasi commit cu module, controller, service si inregistrarea in AppModule, daca este cazul;
+- inainte de push trebuie rulate local pnpm db:generate, pnpm --filter api build si pnpm --filter web build;
+- pentru modificari mai mari se va prefera branch dedicat si PR, nu commit direct pe main.
+
+## De confirmat inainte de continuarea Sprint 1
+
 - Decizie privind Docker: reparare locala ulterioara sau mentinere flux PostgreSQL local pentru dezvoltare.
 - Extindere health endpoint pentru verificare reala database.
+- Stabilizare CI dupa commitul atomic urmator.
+- Inregistrarea modulelor noi in AppModule si verificarea endpointurilor read-only in Swagger.
 
 ## In afara scope Sprint 0
 
